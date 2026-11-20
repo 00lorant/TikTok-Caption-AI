@@ -1,0 +1,276 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TikTok Caption AI</title>
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #0d0d12;
+  color: white;
+  font-family: Arial, sans-serif;
+  padding: 22px 16px 40px;
+}
+
+.app {
+  max-width: 480px;
+  margin: auto;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 35px;
+}
+
+.logo {
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.logo span { color: #b18aff; }
+
+.icon {
+  background: #211b30;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+h1 {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #9995a5;
+  line-height: 1.5;
+  margin-bottom: 25px;
+}
+
+.upload {
+  border: 2px dashed #59447c;
+  background: #17131f;
+  border-radius: 20px;
+  padding: 32px 15px;
+  text-align: center;
+}
+
+.upload-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.upload p {
+  color: #aaa5b5;
+  font-size: 14px;
+}
+
+.choose {
+  display: inline-block;
+  background: #a779f5;
+  color: #100b19;
+  padding: 13px 24px;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+input[type=file] { display: none; }
+
+video {
+  display: none;
+  width: 100%;
+  max-height: 350px;
+  margin-top: 18px;
+  border-radius: 15px;
+  background: black;
+}
+
+.analyze {
+  width: 100%;
+  border: none;
+  padding: 17px;
+  margin-top: 18px;
+  border-radius: 13px;
+  background: #a779f5;
+  color: #100b19;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.analyze:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.results {
+  margin-top: 30px;
+  display: none;
+}
+
+.result-card {
+  background: #191720;
+  border: 1px solid #30283d;
+  border-radius: 17px;
+  padding: 19px;
+  margin-top: 14px;
+}
+
+.result-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.result-heading h3 { margin: 0; }
+
+.copy {
+  background: #302641;
+  color: #d7c3ff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.result-text {
+  color: #dedbe5;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.status {
+  color: #bba0f3;
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+footer {
+  text-align: center;
+  color: #777281;
+  font-size: 12px;
+  margin-top: 40px;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">TikTok <span>Caption AI</span></div>
+  <div class="icon">✦</div>
+</header>
+
+<h1>Make every video count.</h1>
+<p class="subtitle">
+Upload a video and let AI help you create captions and hashtags that fit your content.
+</p>
+
+<div class="upload">
+  <div class="upload-icon">🎬</div>
+  <strong>Upload your video</strong>
+  <p>Choose a video from your iPhone camera roll.</p>
+  <label class="choose" for="videoFile">Choose video</label>
+  <input id="videoFile" type="file" accept="video/*">
+</div>
+
+<video id="videoPreview" controls playsinline></video>
+
+<button class="analyze" id="analyzeButton" disabled>
+  ✨ Analyze my video
+</button>
+
+<div class="status" id="status"></div>
+
+<section class="results" id="results">
+  <h2>Your AI results</h2>
+
+  <div class="result-card">
+    <div class="result-heading">
+      <h3>Generated caption</h3>
+      <button class="copy" onclick="copyResult('caption')">Copy</button>
+    </div>
+    <div class="result-text" id="caption"></div>
+  </div>
+
+  <div class="result-card">
+    <div class="result-heading">
+      <h3>Recommended hashtags</h3>
+      <button class="copy" onclick="copyResult('hashtags')">Copy</button>
+    </div>
+    <div class="result-text" id="hashtags"></div>
+  </div>
+</section>
+
+<footer>Made for creators · TikTok Caption AI</footer>
+</div>
+
+<script>
+const fileInput = document.getElementById("videoFile");
+const preview = document.getElementById("videoPreview");
+const analyzeButton = document.getElementById("analyzeButton");
+const statusText = document.getElementById("status");
+let selectedFile = null;
+
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  selectedFile = file;
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+  analyzeButton.disabled = false;
+  statusText.textContent = "Video ready to analyze.";
+  document.getElementById("results").style.display = "none";
+});
+
+analyzeButton.addEventListener("click", async () => {
+  if (!selectedFile) return;
+
+  analyzeButton.disabled = true;
+  statusText.textContent = "Connecting to the AI analyzer...";
+
+  try {
+    const formData = new FormData();
+    formData.append("video", selectedFile);
+
+    const response = await fetch("/analyze", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Analysis failed.");
+    }
+
+    document.getElementById("caption").textContent = data.caption;
+    document.getElementById("hashtags").textContent = data.hashtags;
+    document.getElementById("results").style.display = "block";
+    statusText.textContent = "Analysis complete!";
+  } catch (error) {
+    statusText.textContent = error.message;
+  } finally {
+    analyzeButton.disabled = false;
+  }
+});
+
+function copyResult(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text);
+  statusText.textContent = "Copied!";
+}
+</script>
+</body>
+</html>
