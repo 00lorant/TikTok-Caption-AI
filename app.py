@@ -21,13 +21,12 @@ async def home():
 
 @app.post("/analyze")
 async def analyze(video: UploadFile = File(...)):
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     if not os.environ.get("OPENAI_API_KEY"):
         raise HTTPException(
             status_code=500,
             detail="The AI API key has not been configured."
         )
-
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     if not video.content_type or not video.content_type.startswith("video/"):
         raise HTTPException(
             status_code=400,
