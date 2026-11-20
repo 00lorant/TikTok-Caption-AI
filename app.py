@@ -6,7 +6,7 @@ import logging
 
 import cv2
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse 
 from openai import OpenAI
 
 app = FastAPI()
@@ -16,9 +16,8 @@ app = FastAPI()
 
 @app.get("/")
 async def home():
-    return {"status": "TikTok Caption AI is running"}
-
-
+    return FileResponse("index.html")
+    
 @app.post("/analyze")
 async def analyze(video: UploadFile = File(...)):
     if not os.environ.get("OPENAI_API_KEY"):
